@@ -1,3 +1,5 @@
+import random
+
 import pygame
 
 
@@ -33,6 +35,9 @@ class Doctor(pygame.sprite.Sprite):
                 self.rect.y += 150
             if args[0].key == 273:
                 self.rect.y -= 150
+            if args[0].key == 32:
+                vac = Vaccine(y=self.rect.centery)
+                vaccines.add(vac)
 
 
 class Vaccine(pygame.sprite.Sprite):
@@ -57,7 +62,7 @@ class Enemy(pygame.sprite.Sprite):
         self.image = load_image("/Users/alexeyilyin/Desktop/virus2.png")
         self.rect = self.image.get_rect()
         self.rect.x = 700
-        self.rect.y = 10
+        self.rect.y = 10 + (150 * random.randint(0, 5))
         self.hp = 3
 
     def update(self, *args):
@@ -89,7 +94,7 @@ fps = 60
 clock = pygame.time.Clock()
 running = True
 fr_c = 0
-rate_of_fire = 50
+enemy_rate = 250
 while running:
     screen.fill((255, 255, 255))
     for event in pygame.event.get():
@@ -104,4 +109,7 @@ while running:
     vaccines.draw(screen)
     clock.tick(fps)
     pygame.display.flip()
+    if fr_c % enemy_rate == 0:
+        en = Enemy()
+        enemies.add(en)
     fr_c += 1
