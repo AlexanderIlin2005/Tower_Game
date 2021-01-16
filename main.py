@@ -28,11 +28,6 @@ def draw_rects():
         pygame.draw.rect(screen, (195, 213, 229), rect)
 
 
-def draw_rect(x, y, hp):
-    rect = pygame.Rect(x + 2, y, 16 * hp, 3)
-    pygame.draw.rect(screen, (255, 0, 0), rect)
-
-
 class Doctor(pygame.sprite.Sprite):
 
     def __init__(self, *group):
@@ -40,16 +35,11 @@ class Doctor(pygame.sprite.Sprite):
         self.image = load_image("data/doctor500.png")
         self.rect = self.image.get_rect()
         self.rect.x = 200
-        self.rect.y = 145
+        self.rect.y = 150
         self.move_rate = 120
 
     def update(self, *args):
         hits = pygame.sprite.spritecollide(self, enemies, False)
-        if hits:
-            self.kill()
-            if exp > record:
-                with open("record.txt", "w") as r_file:
-                    r_file.write(f"{exp}")
         if args and args[0].type == pygame.MOUSEBUTTONDOWN and \
                 self.rect.collidepoint(args[0].pos):
             vac = Vaccine(y=self.rect.centery)
@@ -88,21 +78,31 @@ class Enemy(pygame.sprite.Sprite):
 
     def __init__(self, *group):
         super().__init__(*group)
-        self.image = load_image("data/virus2.png")
+        self.image = load_image("data/virus1.png")
+        self.images = [load_image("data/virus3.png"), load_image("data/virus5.png")]
         self.rect = self.image.get_rect()
         self.rect.x = 900
-        self.rect.y = 165 + (120 * random.randint(0, 3))
+        self.rect.y = 150 + (120 * random.randint(0, 3))
         self.hp = 3
 
     def update(self, *args):
+        global exp
         self.rect.x -= 2
         hits = pygame.sprite.spritecollide(self, vaccines, False)
         if hits:
             for hit in hits:
                 hit.kill()
                 self.hp -= damage
+                if self.hp == 2:
+                    self.image = self.images[0]
+                if self.hp == 1:
+                    self.image = self.images[1]
+        if self.rect.x < doc.rect.x + doc.rect.width and self.rect.y == doc.rect.y:
+            doc.kill()
+            if exp > record:
+                with open("record.txt", "w") as r_file:
+                    r_file.write(f"{exp}")
         if self.hp <= 0:
-            global exp
             exp += 1
             self.kill()
 
@@ -118,10 +118,10 @@ damage = 1
 
 with open("data/record.txt", "r") as record_file:
     record = int(record_file.read())
+doc = Doctor()
+doctors.add(doc)
 for i in range(1):
-    doc = Doctor()
     enemy = Enemy()
-    doctors.add(doc)
     enemies.add(enemy)
 fps = 60
 clock = pygame.time.Clock()
@@ -138,10 +138,8 @@ while running:
     enemies.update()
     vaccines.update()
     draw_rects()
-    for enemy in enemies:
-        draw_rect(enemy.rect.x, enemy.rect.y, enemy.hp)
-    doctors.draw(screen)
     enemies.draw(screen)
+    doctors.draw(screen)
     write_exp_and_record(exp)
     vaccines.draw(screen)
     clock.tick(fps)
