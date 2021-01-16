@@ -20,14 +20,12 @@ def write_exp_and_record(number):
     screen.blit(text, (text_x, text_y))
 
 
-
-
 def draw_rects():
     for i2 in range(4):
         x = 0
         y = 155 + (120 * i2)
         rect = pygame.Rect(x, y, 1000, 70)
-        pygame.draw.rect(screen, (240, 240, 240), rect)
+        pygame.draw.rect(screen, (195, 213, 229), rect)
 
 
 def draw_rect(x, y, hp):
@@ -39,7 +37,7 @@ class Doctor(pygame.sprite.Sprite):
 
     def __init__(self, *group):
         super().__init__(*group)
-        self.image = load_image("/Users/alexeyilyin/Downloads/doctor500.png")
+        self.image = load_image("data/doctor500.png")
         self.rect = self.image.get_rect()
         self.rect.x = 200
         self.rect.y = 145
@@ -75,7 +73,7 @@ class Vaccine(pygame.sprite.Sprite):
 
     def __init__(self, *group, y):
         super().__init__(*group)
-        self.image = load_image("/Users/alexeyilyin/Downloads/shpritz.png")
+        self.image = load_image("data/shpritz.png")
         self.rect = self.image.get_rect()
         self.rect.x = 270
         self.rect.centery = y - 2
@@ -90,7 +88,7 @@ class Enemy(pygame.sprite.Sprite):
 
     def __init__(self, *group):
         super().__init__(*group)
-        self.image = load_image("/Users/alexeyilyin/Desktop/virus2.png")
+        self.image = load_image("data/virus2.png")
         self.rect = self.image.get_rect()
         self.rect.x = 900
         self.rect.y = 165 + (120 * random.randint(0, 3))
@@ -118,7 +116,7 @@ enemies = pygame.sprite.Group()
 vaccines = pygame.sprite.Group()
 damage = 1
 
-with open("record.txt", "r") as record_file:
+with open("data/record.txt", "r") as record_file:
     record = int(record_file.read())
 for i in range(1):
     doc = Doctor()
@@ -136,7 +134,6 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-
         doctors.update(event)
     enemies.update()
     vaccines.update()
