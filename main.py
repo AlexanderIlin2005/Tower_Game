@@ -10,10 +10,16 @@ def load_image(path):
 
 def write_exp_and_record(number):
     font = pygame.font.Font(None, 40)
-    text = font.render(f"Ваши очки: {number}", True, (255, 0, 0))
+    text = font.render(f"Ваши очки: {number}", True, (0, 0, 255))
     text_x = 10
     text_y = 10
     screen.blit(text, (text_x, text_y))
+    text = font.render(f"Рекорд: {record}", True, (0, 0, 255))
+    text_x = 600
+    text_y = 10
+    screen.blit(text, (text_x, text_y))
+
+
 
 
 def draw_rects():
@@ -43,6 +49,9 @@ class Doctor(pygame.sprite.Sprite):
         hits = pygame.sprite.spritecollide(self, enemies, False)
         if hits:
             self.kill()
+            if exp > record:
+                with open("record.txt", "w") as r_file:
+                    r_file.write(f"{exp}")
         if args and args[0].type == pygame.MOUSEBUTTONDOWN and \
                 self.rect.collidepoint(args[0].pos):
             vac = Vaccine(y=self.rect.centery)
@@ -66,10 +75,10 @@ class Vaccine(pygame.sprite.Sprite):
 
     def __init__(self, *group, y):
         super().__init__(*group)
-        self.image = load_image("/Users/alexeyilyin/Documents/шприц.png")
+        self.image = load_image("/Users/alexeyilyin/Downloads/shpritz.png")
         self.rect = self.image.get_rect()
         self.rect.x = 270
-        self.rect.centery = y - 5
+        self.rect.centery = y - 2
 
     def update(self, *args):
         self.rect.x += 5
@@ -109,6 +118,8 @@ enemies = pygame.sprite.Group()
 vaccines = pygame.sprite.Group()
 damage = 1
 
+with open("record.txt", "r") as record_file:
+    record = int(record_file.read())
 for i in range(1):
     doc = Doctor()
     enemy = Enemy()
@@ -120,8 +131,6 @@ running = True
 fr_c = 0
 enemy_rate = 250
 exp = 0
-with open("record.txt", "w") as f:
-    f.write(f"{exp}")
 while running:
     screen.fill((255, 255, 255))
     for event in pygame.event.get():
