@@ -186,12 +186,15 @@ class Enemy(pygame.sprite.Sprite):
             self.kill()
 
 
+pygame.mixer.init()
+pygame.mixer.music.load("/Users/alexeyilyin/Downloads/Neon_Theme_Music_Mp3.mp3")
+pygame.init()
+font = pygame.font.Font("data/Phosphate.ttc", 40)
+size = width, height = 1000, 600
+screen = pygame.display.set_mode(size)
+pygame.display.set_caption('Игра "Вакцинация"')
+pygame.mixer.music.play(-1)
 while True:
-    pygame.init()
-    font = pygame.font.Font("data/Phosphate.ttc", 40)
-    size = width, height = 1000, 600
-    screen = pygame.display.set_mode(size)
-    pygame.display.set_caption('Игра "Вакцинация"')
     doctors = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
     vaccines = pygame.sprite.Group()
