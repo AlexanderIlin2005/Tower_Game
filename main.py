@@ -272,3 +272,4 @@ while True:
         with open("data/record.txt", "w") as r_file:
             r_file.write(f"{exp}")
 
+
