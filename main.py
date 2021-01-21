@@ -187,7 +187,7 @@ class Enemy(pygame.sprite.Sprite):
 
 
 pygame.mixer.init()
-pygame.mixer.music.load("/Users/alexeyilyin/Downloads/Neon_Theme_Music_Mp3.mp3")
+pygame.mixer.music.load("data/Neon_Theme_Music_Mp3.mp3")
 pygame.init()
 font = pygame.font.Font("data/Phosphate.ttc", 40)
 size = width, height = 1000, 600
