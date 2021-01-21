@@ -2,7 +2,6 @@ import random
 import sys
 
 import pygame
-import pygame_gui
 
 
 def load_image(path):
@@ -30,7 +29,7 @@ def draw_rects():
 
 
 def do_gameover(details):
-    global running, clock, fps, playing
+    global running
 
     def write_info():
         global exp
@@ -48,25 +47,11 @@ def do_gameover(details):
         screen.blit(texts[1], (text_x, text_y))
         text_y += 40
         screen.blit(texts[2], (text_x, text_y))
-
-    manager2 = pygame_gui.UIManager((1000, 600))
-    play_rect2 = pygame.Rect((400, 400), (200, 50))
-    play2 = pygame_gui.elements.UIButton(
-        relative_rect=play_rect2,
-        manager=manager2,
-        text="Начать заново",
-    )
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
                 exit()
-            if event.type == pygame.USEREVENT:
-                if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
-                    if event.ui_element == play2:
-                        running = False
-            manager2.process_events(event)
-
         draw_rects()
         enemies.draw(screen)
         doctors.draw(screen)
@@ -74,8 +59,6 @@ def do_gameover(details):
         vaccines.draw(screen)
         write_exp_and_record(exp)
         write_info()
-        manager2.draw_ui(screen)
-        manager2.update(time_delta=time_delta)
         clock.tick(fps)
         pygame.display.flip()
 
@@ -131,7 +114,7 @@ class Smile(pygame.sprite.Sprite):
         super().__init__(*group)
         self.image = load_image(f"data/смайл{random.choice([1, 2, 3])}.png")
         self.rect = self.image.get_rect()
-        self.rect.centerx = 50
+        self.rect.x = 20
         self.rect.y = 160 + (120 * n)
         self.hp = 2
 
@@ -178,7 +161,7 @@ class Enemy(pygame.sprite.Sprite):
             do_gameover("Вирус пробрался!")
         if self.rect.x < doc.rect.x + doc.rect.width - 30 and self.rect.y == doc.rect.y:
             if exp > record:
-                with open("data/record.txt", "w") as r_file:
+                with open("record.txt", "w") as r_file:
                     r_file.write(f"{exp}")
             do_gameover("Доктор заразился!")
         if self.hp <= 0:
@@ -186,88 +169,55 @@ class Enemy(pygame.sprite.Sprite):
             self.kill()
 
 
-while True:
-    pygame.init()
-    font = pygame.font.Font("data/Phosphate.ttc", 40)
-    size = width, height = 1000, 600
-    screen = pygame.display.set_mode(size)
-    pygame.display.set_caption('Игра "Вакцинация"')
-    doctors = pygame.sprite.Group()
-    enemies = pygame.sprite.Group()
-    vaccines = pygame.sprite.Group()
-    smiles = pygame.sprite.Group()
-    damage = 1
-    num_of_enemies = 1
-    manager = pygame_gui.UIManager((1000, 600))
-    fon = pygame.image.load("/Users/alexeyilyin/Downloads/oblozhka 3.png")
-    with open("data/record.txt", "r") as record_file:
-        record = int(record_file.read())
-    doc = Doctor()
-    doctors.add(doc)
-    for i in range(10):
-        enemy = Enemy()
-        enemies.add(enemy)
-    for i in range(4):
-        smile = Smile(n=i)
-        smiles.add(smile)
-    exp = 0
-    fps = 60
-    clock = pygame.time.Clock()
-    running = True
-    fr_c = 0
-    enemy_rate = 250
-    playing = False
-    block = False
-    play_rect = pygame.Rect((420, 525), (100, 50))
-    play = pygame_gui.elements.UIButton(
-        relative_rect=play_rect,
-        manager=manager,
-        text="Играть",
-    )
-    while running:
-        screen.fill((255, 255, 255))
-        time_delta = clock.tick(60) / 1000.0
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                exit()
-            if event.type == pygame.USEREVENT:
-                if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
-                    if event.ui_element == play:
-                        playing = True
-            if playing:
-                doctors.update(event)
-            if not playing:
-                manager.process_events(event)
-        if not playing:
-            screen.blit(fon, (0, -117))
-            manager.draw_ui(screen)
-            manager.update(time_delta=time_delta)
-        if playing:
-            enemies.update()
-            vaccines.update()
-            smiles.update()
-            draw_rects()
-            enemies.draw(screen)
-            doctors.draw(screen)
-            smiles.draw(screen)
-            write_exp_and_record(exp)
-            vaccines.draw(screen)
-        clock.tick(fps)
-        pygame.display.flip()
-        if playing:
-            if fr_c % enemy_rate == 0:
-                if num_of_enemies < 3:
-                    num_of_enemies += 0.1
-                if enemy_rate > 50:
-                    enemy_rate -= 10
-                for i in range(int(num_of_enemies)):
-                    if len(enemies) < 10:
-                        en = Enemy()
-                        enemies.add(en)
-            fr_c += 1
-        if not smiles:
-            do_gameover("Вирус победил!")
+pygame.init()
+font = pygame.font.Font("data/Phosphate.ttc", 40)
+size = width, height = 1000, 600
+screen = pygame.display.set_mode(size)
+pygame.display.set_caption('Игра "Вакцинация"')
+doctors = pygame.sprite.Group()
+enemies = pygame.sprite.Group()
+vaccines = pygame.sprite.Group()
+smiles = pygame.sprite.Group()
+damage = 1
 
-    if exp > record:
-        with open("data/record.txt", "w") as r_file:
-            r_file.write(f"{exp}")
+with open("data/record.txt", "r") as record_file:
+    record = int(record_file.read())
+doc = Doctor()
+doctors.add(doc)
+for i in range(10):
+    enemy = Enemy()
+    enemies.add(enemy)
+for i in range(4):
+    smile = Smile(n=i)
+    smiles.add(smile)
+
+fps = 60
+clock = pygame.time.Clock()
+running = True
+fr_c = 0
+enemy_rate = 250
+exp = 0
+while running:
+    screen.fill((255, 255, 255))
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        doctors.update(event)
+    enemies.update()
+    vaccines.update()
+    smiles.update()
+    draw_rects()
+    enemies.draw(screen)
+    doctors.draw(screen)
+    smiles.draw(screen)
+    write_exp_and_record(exp)
+    vaccines.draw(screen)
+    clock.tick(fps)
+    pygame.display.flip()
+    if fr_c % enemy_rate == 0:
+        for i in range(1):
+            en = Enemy()
+            enemies.add(en)
+    fr_c += 1
+    if not smiles:
+        do_gameover("Вирус победил!")
