@@ -96,16 +96,15 @@ class Doctor(pygame.sprite.Sprite):
             vac = Vaccine(y=self.rect.centery)
             vaccines.add(vac)
         elif args and args[0].type == pygame.KEYDOWN:
-            # print(args[0].key)
             # if args[0].key == 275:
             #    self.rect.x += 150
             # if args[0].key == 276:
             #    self.rect.x -= 150
-            if args[0].key == 274 and self.rect.y + self.move_rate <= 600:
+            if args[0].key == 1073741905 and self.rect.y + self.move_rate <= 600:  # вверх
                 self.rect.y += self.move_rate
-            if args[0].key == 273 and self.rect.y - self.move_rate >= 145:
+            if args[0].key == 1073741906 and self.rect.y - self.move_rate >= 145:  # вниз
                 self.rect.y -= self.move_rate
-            if args[0].key == 32:
+            if args[0].key == 32:  # пробел
                 vac = Vaccine(y=self.rect.centery)
                 vaccines.add(vac)
 
@@ -202,7 +201,7 @@ while True:
     damage = 1
     num_of_enemies = 1
     manager = pygame_gui.UIManager((1000, 600))
-    fon = pygame.image.load("/Users/alexeyilyin/Downloads/oblozhka 3.png")
+    fon = pygame.image.load("data/oblozhka 3.png")
     with open("data/record.txt", "r") as record_file:
         record = int(record_file.read())
     doc = Doctor()
@@ -274,5 +273,3 @@ while True:
     if exp > record:
         with open("data/record.txt", "w") as r_file:
             r_file.write(f"{exp}")
-
-
