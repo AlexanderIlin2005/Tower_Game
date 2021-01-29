@@ -12,8 +12,9 @@ def load_image(path):
 
 
 def update_record():
-    cur.execute(f"""UPDATE players SET record = {exp} WHERE player = '{player}'""")
-    con.commit()
+    if exp > record:
+        cur.execute(f"""UPDATE players SET record = {exp} WHERE player = '{player}'""")
+        con.commit()
 
 
 def write_exp_and_record(number):
@@ -66,6 +67,7 @@ def do_gameover(details):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+                con.close()
                 exit()
             if event.type == pygame.USEREVENT:
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
@@ -296,5 +298,4 @@ while True:
         if not smiles:
             do_gameover("Вирус победил!")
 
-    if exp > record:
-        update_record()
+    update_record()
