@@ -1,5 +1,6 @@
 import random
 import sys
+import sqlite3
 
 import pygame
 import pygame_gui
@@ -8,6 +9,11 @@ import pygame_gui
 def load_image(path):
     image = pygame.image.load(path)
     return image
+
+
+def update_record():
+    cur.execute(f"""UPDATE players SET record = {exp} WHERE player = '{player}'""")
+    con.commit()
 
 
 def write_exp_and_record(number):
@@ -176,9 +182,7 @@ class Enemy(pygame.sprite.Sprite):
         if self.rect.x < 20:
             do_gameover("Вирус пробрался!")
         if self.rect.x < doc.rect.x + doc.rect.width - 30 and self.rect.y == doc.rect.y:
-            if exp > record:
-                with open("data/record.txt", "w") as r_file:
-                    r_file.write(f"{exp}")
+            update_record()
             do_gameover("Доктор заразился!")
         if self.hp <= 0:
             exp += 1
@@ -193,6 +197,11 @@ size = width, height = 1000, 600
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Игра "Вакцинация"')
 pygame.mixer.music.play(-1)
+player = ""
+db_name = "data/players.db"
+con = sqlite3.connect(db_name)
+cur = con.cursor()
+record = 0
 while True:
     doctors = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
@@ -202,8 +211,6 @@ while True:
     num_of_enemies = 1
     manager = pygame_gui.UIManager((1000, 600))
     fon = pygame.image.load("data/oblozhka 3.png")
-    with open("data/record.txt", "r") as record_file:
-        record = int(record_file.read())
     doc = Doctor()
     doctors.add(doc)
     for i in range(10):
@@ -226,6 +233,11 @@ while True:
         manager=manager,
         text="Играть",
     )
+    play.__setattr__("visible", False)
+    player_entry = pygame_gui.elements.UITextEntryLine(
+        manager=manager,
+        relative_rect=pygame.Rect((400, 270), (140, 50))
+    )
     while running:
         screen.fill((255, 255, 255))
         time_delta = clock.tick(60) / 1000.0
@@ -236,9 +248,23 @@ while True:
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                     if event.ui_element == play:
                         playing = True
+                        player = player_entry.text.strip(" ")
+                        players = cur.execute(f"""SELECT player FROM players""").fetchall()
+                        players_list = [pl[0] for pl in players]
+                        if player in players_list:
+                            record = cur.execute(f"""SELECT record FROM players 
+                            WHERE player = '{player}'""").fetchone()[0]
+                        else:
+                            cur.execute(f"""INSERT INTO players(player, record) VALUES("{player}", 0)""")
+                        con.commit()
+
             if playing:
                 doctors.update(event)
             if not playing:
+                if player_entry.text.strip(" ") != "":
+                    play.__setattr__("visible", True)
+                else:
+                    play.__setattr__("visible", False)
                 manager.process_events(event)
         if not playing:
             screen.blit(fon, (0, -117))
@@ -271,5 +297,4 @@ while True:
             do_gameover("Вирус победил!")
 
     if exp > record:
-        with open("data/record.txt", "w") as r_file:
-            r_file.write(f"{exp}")
+        update_record()
