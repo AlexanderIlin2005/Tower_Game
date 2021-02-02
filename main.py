@@ -1,5 +1,4 @@
 import random
-import sys
 import sqlite3
 
 import pygame
@@ -43,9 +42,9 @@ def do_gameover(details):
         global exp
 
         texts = [font.render("Игра окончена", True, (0, 0, 255)), font.render(details, True, (0, 0, 255)),
-                 font.render(f"Результат: {exp}", True, (0, 0, 255))]
+                 font.render(f"Ваш результат: {exp}", True, (0, 0, 255))]
         text_x = 300
-        text_y = 250
+        text_y = 350
         text_rect = pygame.Rect(text_x - 10, text_y - 10, 430, 145)
         frame_rect = pygame.Rect(text_x - 15, text_y - 15, 435, 150)
         pygame.draw.rect(screen, (200, 200, 200), text_rect)
@@ -56,13 +55,61 @@ def do_gameover(details):
         text_y += 40
         screen.blit(texts[2], (text_x, text_y))
 
+    def draw_top3():
+        # k = 20 - len(elem[0]) - len(str(elem[1]))
+        # (40 - len(best_players[0][0]) - len(str(best_players[0][1])))
+        tab = "\t"
+        max_ = len((max(best_players, key=lambda a: len(a[0])))[0])
+        texts = [font.render(f"1){best_players[0][0]}" +
+                             f"""{'  ' * (8 + (max_ - len(best_players[0][0])) - 
+                                          (2 if '(вы)' in best_players[0][0].lower() else 0))}""" +
+                             f"{best_players[0][1]}", True, (0, 0, 255)
+                             ),
+                 font.render(f"2){best_players[1][0]}" +
+                             f"""{'  ' * (8 + (max_ - len(best_players[1][0])) - 
+                                          (2 if '(вы)' in best_players[1][0].lower() else 0))}""" +
+                             f"{best_players[1][1]}", True, (0, 0, 255)
+                             ),
+                 font.render(f"3){best_players[2][0]}" +
+                             f"""{'  ' * (8 + (max_ - len(best_players[2][0])) - 
+                                          (2 if '(вы)' in best_players[2][0].lower() else 0))}""" +
+                             f"{best_players[2][1]}", True, (0, 0, 255)
+                             ),
+
+
+
+                 ]
+        text_x = 300
+        text_y = 150
+        text_rect = pygame.Rect(text_x - 10, text_y - 10, 430, 195)
+        frame_rect = pygame.Rect(text_x - 15, text_y - 15, 435, 200)
+        pygame.draw.rect(screen, (200, 200, 200), text_rect)
+        pygame.draw.rect(screen, (180, 180, 180), frame_rect, 10)
+        screen.blit(texts[0], (text_x, text_y))
+        text_y += 60
+        screen.blit(texts[1], (text_x, text_y))
+        text_y += 60
+        screen.blit(texts[2], (text_x, text_y))
+        line_rect = pygame.Rect(285, 195, 430, 10)
+        pygame.draw.rect(screen, (180, 180, 180), line_rect)
+        line_rect2 = pygame.Rect(285, 260, 430, 10)
+        pygame.draw.rect(screen, (180, 180, 180), line_rect2)
+        line_rect3 = pygame.Rect(550, 135, 10, 200)
+        pygame.draw.rect(screen, (180, 180, 180), line_rect3)
+
     manager2 = pygame_gui.UIManager((1000, 600))
-    play_rect2 = pygame.Rect((400, 400), (200, 50))
+    play_rect2 = pygame.Rect((400, 520), (200, 50))
     play2 = pygame_gui.elements.UIButton(
         relative_rect=play_rect2,
         manager=manager2,
         text="Начать заново",
     )
+    update_record()
+    best_players = [list(i) for i in
+                    cur.execute("""SELECT DISTINCT player, record FROM players ORDER BY record DESC""").fetchmany(3)]
+    for i in best_players:
+        if i[0] == player:
+            i[0] = i[0] + "(ВЫ)"
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -82,8 +129,9 @@ def do_gameover(details):
         vaccines.draw(screen)
         write_exp_and_record(exp)
         write_info()
-        manager2.draw_ui(screen)
+        draw_top3()
         manager2.update(time_delta=time_delta)
+        manager2.draw_ui(screen)
         clock.tick(fps)
         pygame.display.flip()
 
@@ -104,17 +152,32 @@ class Doctor(pygame.sprite.Sprite):
             vac = Vaccine(y=self.rect.centery)
             vaccines.add(vac)
         elif args and args[0].type == pygame.KEYDOWN:
+            global super_power_exp, paused
             # if args[0].key == 275:
             #    self.rect.x += 150
             # if args[0].key == 276:
             #    self.rect.x -= 150
+            print(args[0].key)
             if args[0].key == 1073741905 and self.rect.y + self.move_rate <= 600:  # вверх
-                self.rect.y += self.move_rate
+                if not paused:
+                    self.rect.y += self.move_rate
             if args[0].key == 1073741906 and self.rect.y - self.move_rate >= 145:  # вниз
-                self.rect.y -= self.move_rate
+                if not paused:
+                    self.rect.y -= self.move_rate
             if args[0].key == 32:  # пробел
-                vac = Vaccine(y=self.rect.centery)
-                vaccines.add(vac)
+                if not paused:
+                    vac = Vaccine(y=self.rect.centery)
+                    vaccines.add(vac)
+            if args[0].key == 1073742053:  # правый shift
+                if super_power_exp >= 1:
+                    for enemy in enemies:
+                        enemy.kill()
+                    super_power_exp = 0
+            if args[0].key == 27:
+                paused = True
+            elif args[0].key != 27:
+                paused = False
+
 
 
 class Vaccine(pygame.sprite.Sprite):
@@ -170,11 +233,13 @@ class Enemy(pygame.sprite.Sprite):
         self.hp = 3
 
     def update(self, *args):
-        global exp
+        global exp, super_power_exp
         self.rect.x -= 2
         hits = pygame.sprite.spritecollide(self, vaccines, False)
         if hits:
             for hit in hits:
+                if super_power_exp < 1:
+                    super_power_exp += 0.01
                 hit.kill()
                 self.hp -= damage
                 if self.hp == 2:
@@ -195,6 +260,8 @@ pygame.mixer.init()
 pygame.mixer.music.load("data/Neon_Theme_Music_Mp3.mp3")
 pygame.init()
 font = pygame.font.Font("data/Phosphate.ttc", 40)
+font2 = pygame.font.Font("data/Phosphate.ttc", 20)
+font3 = pygame.font.Font("data/Phosphate.ttc", 80)
 size = width, height = 1000, 600
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Игра "Вакцинация"')
@@ -204,7 +271,9 @@ db_name = "data/players.db"
 con = sqlite3.connect(db_name)
 cur = con.cursor()
 record = 0
+paused = False
 while True:
+    super_power_exp = 0
     doctors = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
     vaccines = pygame.sprite.Group()
@@ -229,17 +298,42 @@ while True:
     enemy_rate = 250
     playing = False
     block = False
+    show_about_game = False
     play_rect = pygame.Rect((420, 525), (100, 50))
     play = pygame_gui.elements.UIButton(
         relative_rect=play_rect,
         manager=manager,
         text="Играть",
     )
+    about_game_btn = pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect((5, 5), (100, 50)),
+        manager=manager,
+        text="Обучение",
+    )
     play.__setattr__("visible", False)
     player_entry = pygame_gui.elements.UITextEntryLine(
         manager=manager,
         relative_rect=pygame.Rect((400, 270), (140, 50))
     )
+    info = pygame_gui.elements.UITextBox(
+        manager=manager,
+        html_text="Игра «Вакцинация против вирусов»:<br />"
+                  "Задача игрока перемещать доктора по дорожкам (вверх/вниз), стреляя"
+                  " вакциной из шприца в надвигающиеся вирусы. Пропущенные доктором"
+                  "вирусы атакуют смайлы, заражая их. Игрок зарабатывает очки за"
+                  " обезвреживание вирусов. Вирус слабеет посла попадания в него вакцины."
+                  "После попадания третьей дозы вакцины вирус погибает."
+                  "За определенное число попаданий по вирусам"
+                  " игрок получает «способность» полностью очистить экран от противника.<br />"
+                  "УПРАВЛЕНИЕ:<br />"
+                  " - Для стрельбы используйте пробел<br />"
+                  " - Для перемещения используйте стрелки вверх/вниз<br />"
+                  " - Для использования способности нажмите правый shift<br />"
+                  " - Приостановить игру можно нажатием клавиши Enter<br />"
+                            "Победим пандемию вакцинацией!",
+        relative_rect=pygame.Rect((50, 50), (550, 290))
+    )
+    info.__setattr__("visible", False)
     while running:
         screen.fill((255, 255, 255))
         time_delta = clock.tick(60) / 1000.0
@@ -250,16 +344,22 @@ while True:
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                     if event.ui_element == play:
                         playing = True
+                        show_about_game = False
                         player = player_entry.text.strip(" ")
                         players = cur.execute(f"""SELECT player FROM players""").fetchall()
+                        print(players)
                         players_list = [pl[0] for pl in players]
                         if player in players_list:
-                            record = cur.execute(f"""SELECT record FROM players 
-                            WHERE player = '{player}'""").fetchone()[0]
+                            get = f"SELECT record FROM players WHERE player = '{player}'"
+                            record = cur.execute(get).fetchone()[0]
                         else:
-                            cur.execute(f"""INSERT INTO players(player, record) VALUES("{player}", 0)""")
+                            cur.execute(f"INSERT INTO players(player, record) VALUES('{player}', 0)""")
                         con.commit()
-
+                    if event.ui_element == about_game_btn:
+                        if info.visible:
+                            info.__setattr__("visible", False)
+                        else:
+                            info.__setattr__("visible", True)
             if playing:
                 doctors.update(event)
             if not playing:
@@ -273,18 +373,28 @@ while True:
             manager.draw_ui(screen)
             manager.update(time_delta=time_delta)
         if playing:
-            enemies.update()
-            vaccines.update()
-            smiles.update()
+            if not paused:
+                enemies.update()
+                vaccines.update()
+                smiles.update()
             draw_rects()
             enemies.draw(screen)
             doctors.draw(screen)
             smiles.draw(screen)
             write_exp_and_record(exp)
             vaccines.draw(screen)
+            if paused:
+                text = font3.render("ПАУЗА", True, (0, 0, 255))
+                screen.blit(text, (390, 260))
+            if super_power_exp < 1:
+                text = font2.render(f"Готовность способности: {int((super_power_exp / 1) * 100)}%", True, (0, 0, 255))
+                screen.blit(text, (10, 60))
+            else:
+                text = font2.render(f"Способность полностью готова(нажмите rshift)", True, (0, 0, 255))
+                screen.blit(text, (10, 60))
         clock.tick(fps)
         pygame.display.flip()
-        if playing:
+        if playing and not paused:
             if fr_c % enemy_rate == 0:
                 if num_of_enemies < 3:
                     num_of_enemies += 0.1
@@ -297,5 +407,4 @@ while True:
             fr_c += 1
         if not smiles:
             do_gameover("Вирус победил!")
-
     update_record()
