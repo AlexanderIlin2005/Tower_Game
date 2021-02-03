@@ -56,9 +56,6 @@ def do_gameover(details):
         screen.blit(texts[2], (text_x, text_y))
 
     def draw_top3():
-        # k = 20 - len(elem[0]) - len(str(elem[1]))
-        # (40 - len(best_players[0][0]) - len(str(best_players[0][1])))
-        tab = "\t"
         max_ = len((max(best_players, key=lambda a: len(a[0])))[0])
         texts = [font.render(f"1){best_players[0][0]}" +
                              f"""{'  ' * (8 + (max_ - len(best_players[0][0])) - 
@@ -175,9 +172,10 @@ class Doctor(pygame.sprite.Sprite):
                     super_power_exp = 0
             if args[0].key == 27:
                 paused = True
+                pygame.mixer.music.pause()
             elif args[0].key != 27:
                 paused = False
-
+                pygame.mixer.music.unpause()
 
 
 class Vaccine(pygame.sprite.Sprite):
